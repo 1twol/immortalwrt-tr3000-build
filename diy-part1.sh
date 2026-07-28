@@ -27,3 +27,8 @@ git clone https://github.com/eamonxg/luci-theme-aurora package/luci-theme-aurora
 git clone https://github.com/eamonxg/luci-app-aurora-config package/luci-app-aurora-config
 git clone https://github.com/timsaya/luci-app-bandix package/luci-app-bandix
 git clone https://github.com/timsaya/openwrt-bandix package/openwrt-bandix
+git clone https://github.com/sirpdboy/luci-app-taskplan package/luci-app-taskplan
+git clone https://github.com/zzsj0928/luci-app-pushbot package/luci-app-pushbot
+git clone https://github.com/sbwml/luci-app-mentohust package/mentohust
+git clone https://github.com/lmq8267/luci-app-uugamebooster.git package/luci-app-uugamebooster
+
