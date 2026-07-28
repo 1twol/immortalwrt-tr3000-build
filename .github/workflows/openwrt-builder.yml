@@ -48,13 +48,13 @@ env:
   DEVICE_INPUT: ${{ github.event.inputs.device || github.event.client_payload.device }}
   CCACHE_DIR: /workdir/.ccache
   CCACHE_MAXSIZE: 2G
-  REPO_URL: ${{ github.event.inputs.repo }}
+  REPO_URL: ${{ github.event.inputs.repo || github.event.client_payload.repo }}
   REPO_BRANCH: openwrt-24.10-6.6
   REPO_COMMIT: ${{ github.event.inputs.commit }}
   FEEDS_CONF: feeds.conf.default
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
-  UPLOAD_RELEASE: ${{ github.event.inputs.release }}
+  UPLOAD_RELEASE: ${{ github.event.inputs.release || github.event.client_payload.release }}
   PRERELEASE: ${{ github.event.inputs.prerelease }}
   TZ: Asia/Shanghai
 
@@ -129,7 +129,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add "$CONFIG_FILE"
-          git diff --cached --quiet || (git commit -m "Update config: ${CONFIG_FILE}" && git push origin HEAD:main)
+          
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          
+          git diff --cached --quiet || (
+            git commit -m "Update config: ${CONFIG_FILE}" || true
+            git pull --rebase origin $CURRENT_BRANCH
+            git push -f origin HEAD:$CURRENT_BRANCH
+          )
 
   build:
     name: 🔨 Build Firmware
@@ -238,20 +245,14 @@ jobs:
               make -j1 V=s || exit 1
             fi
 
-            # 6. 收集产物
-            # 直接寻找所有 bin 文件并复制
-            echo "📥 Collecting artifacts for $DEV..."
-            find bin/targets/ -name "*sysupgrade.bin" -exec cp {} $GITHUB_WORKSPACE/firmware_collection/ \;
-
-            # 8. 定向清理
-            echo "🧹 Partial cleaning to save disk space while keeping toolchain..."
-            rm -rf ./build_dir/target-* 
-            rm -rf ./bin/targets/*
-            
             echo "✅ $DEV build finished."
             df -hT /workdir
             echo "::endgroup::"
           done
+
+          echo "📥 Collecting artifacts"
+          find bin/targets/ -name "*sysupgrade.bin" -exec cp {} $GITHUB_WORKSPACE/firmware_collection/ \;
+
           echo "status=success" >> $GITHUB_OUTPUT
 
       - name: 🪄 Upload Binaries (Artifacts)
