@@ -30,5 +30,7 @@ git clone https://github.com/timsaya/openwrt-bandix package/openwrt-bandix
 git clone https://github.com/sirpdboy/luci-app-taskplan package/luci-app-taskplan
 git clone https://github.com/zzsj0928/luci-app-pushbot package/luci-app-pushbot
 git clone https://github.com/sbwml/luci-app-mentohust package/mentohust
-git clone https://github.com/lmq8267/luci-app-uugamebooster.git package/luci-app-uugamebooster
+git clone --depth 1 https://github.com/xiaodoudou/luci-app-uugamebooster package/uugamebooster-src
+mv package/uugamebooster-src/luci-app-uugamebooster package/luci-app-uugamebooster
+rm -rf package/uugamebooster-src
 
