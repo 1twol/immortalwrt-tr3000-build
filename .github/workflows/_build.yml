@@ -1,4 +1,4 @@
-name: Build (reusable)
+name: Build (internal)
 
 permissions:
   contents: write
