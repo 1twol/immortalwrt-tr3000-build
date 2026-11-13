@@ -1,39 +1,33 @@
 #!/bin/bash
 #
-# https://github.com/P3TERX/Actions-OpenWrt
-# File name: diy-part1.sh
-# Description: OpenWrt DIY script part 1 (Before Update feeds)
+# 通用定制脚本（feeds 更新之前执行）
+#  1. 按 extras/clones.txt 克隆第三方包
+#  2. 把 package/ 下的本地包复制进源码树
+#  3. 执行 extras/after-clone.sh（可选）
 #
-# Copyright (c) 2019-2024 P3TERX <https://p3terx.com>
-#
-# This is free software, licensed under the MIT License.
-# See /LICENSE for more information.
-#
+set -e
 
-# Uncomment a feed source
-#sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+CLONES="$ROOT/extras/clones.txt"
 
-# Add a feed source
-#echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
-#echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
-
-# Copy custom local packages into OpenWrt tree so they are available during build
-if [ -d "$GITHUB_WORKSPACE/package/luci-compat-keep" ]; then
-  mkdir -p package
-  cp -r "$GITHUB_WORKSPACE/package/luci-compat-keep" package/
+if [ -f "$CLONES" ]; then
+  while read -r url dest _; do
+    case "$url" in
+      ''|\#*) continue ;;
+    esac
+    if [ -z "$dest" ]; then
+      dest="package/$(basename "$url" .git)"
+    fi
+    echo "==> clone $url -> $dest"
+    git clone --depth 1 "$url" "$dest"
+  done < "$CLONES"
 fi
 
-git clone https://github.com/eamonxg/luci-theme-aurora package/luci-theme-aurora
-git clone https://github.com/eamonxg/luci-app-aurora-config package/luci-app-aurora-config
-git clone https://github.com/timsaya/luci-app-bandix package/luci-app-bandix
-git clone https://github.com/timsaya/openwrt-bandix package/openwrt-bandix
-git clone https://github.com/sirpdboy/luci-app-taskplan package/luci-app-taskplan
-git clone https://github.com/zzsj0928/luci-app-pushbot package/luci-app-pushbot
-git clone https://github.com/sbwml/luci-app-mentohust package/mentohust
-git clone --depth 1 https://github.com/xiaodoudou/luci-app-uugamebooster package/uugamebooster-src
-mv package/uugamebooster-src/luci-app-uugamebooster package/luci-app-uugamebooster
-rm -rf package/uugamebooster-src
-sed -i -e 's#chmod +x /etc/init.d/uuplugin#chmod +x $${IPKG_INSTROOT}/etc/init.d/uuplugin#' \
-       -e 's#chmod +x /usr/libexec/uuplugin/#chmod +x $${IPKG_INSTROOT}/usr/libexec/uuplugin/#g' \
-       package/luci-app-uugamebooster/Makefile
+if [ -d "$ROOT/package" ]; then
+  mkdir -p package
+  cp -r "$ROOT/package/." package/
+fi
 
+if [ -x "$ROOT/extras/after-clone.sh" ]; then
+  "$ROOT/extras/after-clone.sh"
+fi

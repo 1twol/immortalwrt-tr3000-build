@@ -13,8 +13,12 @@
 name: Update Checker
 
 env:
-  REPO_URL: https://github.com/padavanonly/immortalwrt-mt798x-6.6
-  REPO_BRANCH: openwrt-24.10-6.6
+  # 可在仓库 Settings → Variables 覆盖，未设置时使用下面的默认值
+  REPO_URL: ${{ vars.SOURCE_REPO || 'https://github.com/chasey-dev/immortalwrt-mt798x-rebase' }}
+  REPO_BRANCH: ${{ vars.SOURCE_BRANCH || '25.12' }}
+  BUILD_CONFIG: ${{ vars.BUILD_CONFIG || 'config/25.12-256m.config' }}
+  BUILD_DEVICE: ${{ vars.BUILD_DEVICE || 'TR3000-256M' }}
+  BUILD_EXTRAS: ${{ vars.BUILD_EXTRAS || 'true' }}
 
 on:
   workflow_dispatch:
@@ -34,7 +38,7 @@ jobs:
 
       - name: Compare Commit Hash
         id: cacheHash
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .commitHash
           key: commitHash_${{ steps.getHash.outputs.commitHash }}
@@ -46,11 +50,11 @@ jobs:
 
       - name: Trigger build
         if: steps.cacheHash.outputs.cache-hit != 'true'
-        uses: peter-evans/repository-dispatch@v2
+        uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ github.token }}
           event-type: Source Code Update
-          client-payload: '{"device": "all", "repo": "https://github.com/padavanonly/immortalwrt-mt798x-6.6", "release": "true"}'
+          client-payload: '{"repo": "${{ env.REPO_URL }}", "branch": "${{ env.REPO_BRANCH }}", "config": "${{ env.BUILD_CONFIG }}", "device": "${{ env.BUILD_DEVICE }}", "extras": "${{ env.BUILD_EXTRAS }}", "release": "true"}'
           
       - name: Delete workflow runs
         uses: Mattraks/delete-workflow-runs@v2

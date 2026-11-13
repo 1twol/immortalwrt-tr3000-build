@@ -12,22 +12,22 @@ on:
         description: '源码仓库地址'
         required: true
         type: string
-        default: 'https://github.com/padavanonly/immortalwrt-mt798x-6.6'
+        default: 'https://github.com/chasey-dev/immortalwrt-mt798x-rebase'
       branch:
         description: '源码分支'
         required: true
         type: string
-        default: 'openwrt-24.10-6.6'
+        default: '25.12'
       config:
         description: '配置文件路径（相对仓库根目录）'
         required: true
         type: string
-        default: 'config/256m.config'
+        default: 'config/25.12-256m.config'
       device:
         description: '设备标识（仅用于产物与 Release 命名）'
         required: true
         type: string
-        default: '256M'
+        default: 'TR3000-256M'
       commit:
         description: '指定 commit，留空拉取分支最新'
         required: false
@@ -55,10 +55,10 @@ on:
         default: false
 
 env:
-  DEVICE_INPUT: ${{ github.event.inputs.device || github.event.client_payload.device || '256M' }}
-  CONFIG_FILE: ${{ github.event.inputs.config || github.event.client_payload.config || 'config/256m.config' }}
-  REPO_URL: ${{ github.event.inputs.repo || github.event.client_payload.repo || 'https://github.com/padavanonly/immortalwrt-mt798x-6.6' }}
-  REPO_BRANCH: ${{ github.event.inputs.branch || github.event.client_payload.branch || 'openwrt-24.10-6.6' }}
+  DEVICE_INPUT: ${{ github.event.inputs.device || github.event.client_payload.device || 'TR3000-256M' }}
+  CONFIG_FILE: ${{ github.event.inputs.config || github.event.client_payload.config || 'config/25.12-256m.config' }}
+  REPO_URL: ${{ github.event.inputs.repo || github.event.client_payload.repo || 'https://github.com/chasey-dev/immortalwrt-mt798x-rebase' }}
+  REPO_BRANCH: ${{ github.event.inputs.branch || github.event.client_payload.branch || '25.12' }}
   REPO_COMMIT: ${{ github.event.inputs.commit || '' }}
   ENABLE_EXTRAS: ${{ github.event.inputs.extras || github.event.client_payload.extras || 'true' }}
   CCACHE_DIR: /workdir/.ccache
@@ -77,7 +77,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: 🙌 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🛠️ Init Environment
         run: |
@@ -151,7 +151,7 @@ jobs:
 
     steps:
       - name: 🙌 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: 🪠 Free Disk Space
         uses: jlumbroso/free-disk-space@main
@@ -243,10 +243,11 @@ jobs:
           echo "📥 Collecting artifacts"
           find bin/targets/ -name "*sysupgrade.bin" -exec cp {} "$GITHUB_WORKSPACE/firmware_collection/" \;
           ls -lh "$GITHUB_WORKSPACE/firmware_collection/"
+          (cd "$GITHUB_WORKSPACE/firmware_collection" && sha256sum * > sha256sums.txt)
           echo "status=success" >> $GITHUB_OUTPUT
 
       - name: 🪄 Upload Binaries (Artifacts)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: steps.compile.outputs.status == 'success'
         with:
           name: ImmortalWrt_${{ env.DEVICE_INPUT }}_${{ env.REPO_BRANCH }}

@@ -1,0 +1,10 @@
+# 每行：<git 地址> [目标目录]
+# 目标目录留空时默认为 package/<仓库名>
+https://github.com/eamonxg/luci-theme-aurora package/luci-theme-aurora
+https://github.com/eamonxg/luci-app-aurora-config package/luci-app-aurora-config
+https://github.com/timsaya/luci-app-bandix package/luci-app-bandix
+https://github.com/timsaya/openwrt-bandix package/openwrt-bandix
+https://github.com/sirpdboy/luci-app-taskplan package/luci-app-taskplan
+https://github.com/zzsj0928/luci-app-pushbot package/luci-app-pushbot
+https://github.com/sbwml/luci-app-mentohust package/mentohust
+https://github.com/xiaodoudou/luci-app-uugamebooster package/uugamebooster-src

@@ -3,21 +3,38 @@ name: 798x-UBOOT
 on:
   workflow_dispatch:
     inputs:
+      repo:
+        description: 'uboot 源码仓库'
+        required: false
+        type: string
+        default: 'https://github.com/weekdaycare/bl-mt798x-dhcpd'
       prerelease:
         description: '是否发布为预发布版本 (Pre-release)'
         required: false
         type: boolean
         default: false
       branch:
-        description: '选择分支进行编译'
+        description: 'uboot 源码分支'
         required: false
         type: string
         default: 'master'
+      soc:
+        description: 'SoC 型号'
+        required: false
+        type: string
+        default: 'mt7981'
+      boards:
+        description: '设备列表，格式 board:layout，空格分隔'
+        required: false
+        type: string
+        default: 'cudy_tr3000-v1-256mb:0 cudy_tr3000-v1:1'
 
 env:
   GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-  WRT_REPO: https://github.com/weekdaycare/bl-mt798x-dhcpd
-  WRT_BRANCH: ${{ github.event.inputs.branch }}
+  WRT_REPO: ${{ github.event.inputs.repo || 'https://github.com/weekdaycare/bl-mt798x-dhcpd' }}
+  WRT_BRANCH: ${{ github.event.inputs.branch || 'master' }}
+  WRT_SOC: ${{ github.event.inputs.soc || 'mt7981' }}
+  WRT_BOARDS: ${{ github.event.inputs.boards || 'cudy_tr3000-v1-256mb:0 cudy_tr3000-v1:1' }}
   PRERELEASE: ${{ github.event.inputs.prerelease }}
 
 permissions: write-all
@@ -27,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Projects
-        uses: actions/checkout@main
+        uses: actions/checkout@v5
 
       - name: ⚙️ Initialization Environment
         env:
@@ -54,8 +71,12 @@ jobs:
       - name: 🛠️ Compile Firmware
         run: |
           cd ./wrt/
-          SOC=mt7981 BOARD=cudy_tr3000-v1-256mb VERSION=2025 MULTI_LAYOUT=0 ./build.sh
-          SOC=mt7981 BOARD=cudy_tr3000-v1 VERSION=2025 MULTI_LAYOUT=1 ./build.sh
+          for item in $WRT_BOARDS; do
+            BOARD="${item%%:*}"
+            LAYOUT="${item##*:}"
+            echo "==> build board=$BOARD layout=$LAYOUT soc=$WRT_SOC"
+            SOC="$WRT_SOC" BOARD="$BOARD" VERSION=2025 MULTI_LAYOUT="$LAYOUT" ./build.sh
+          done
 
       - name: 📦 Package Firmware
         run: |
@@ -88,7 +109,7 @@ jobs:
           **🌿 Branch:** $WRT_BRANCH
           **📱 ATF:** atf-20250711
           **📱 MTK:** uboot-mtk-20250711
-          **📱 Device:** cudy_tr3000 128M/256M
+          **📱 Devices:** ${WRT_BOARDS}
           **📅 Build Date:** $BUILD_TIME
 
           ## 📥 Download
