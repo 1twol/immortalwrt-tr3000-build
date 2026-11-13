@@ -33,4 +33,7 @@ git clone https://github.com/sbwml/luci-app-mentohust package/mentohust
 git clone --depth 1 https://github.com/xiaodoudou/luci-app-uugamebooster package/uugamebooster-src
 mv package/uugamebooster-src/luci-app-uugamebooster package/luci-app-uugamebooster
 rm -rf package/uugamebooster-src
+sed -i -e 's#chmod +x /etc/init.d/uuplugin#chmod +x $${IPKG_INSTROOT}/etc/init.d/uuplugin#' \
+       -e 's#chmod +x /usr/libexec/uuplugin/#chmod +x $${IPKG_INSTROOT}/usr/libexec/uuplugin/#g' \
+       package/luci-app-uugamebooster/Makefile
 
