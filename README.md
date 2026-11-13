@@ -8,15 +8,22 @@ Actions → `ImmortalWrt Builder` → `Run workflow`：
 
 | 输入 | 说明 | 默认值 |
 | --- | --- | --- |
-| `repo` | 源码仓库地址 | `chasey-dev/immortalwrt-mt798x-rebase` |
-| `branch` | 源码分支 | `25.12` |
-| `config` | 配置文件路径（相对仓库根） | `config/25.12-256m.config` |
-| `device` | 设备标识，仅用于产物/Release 命名 | `TR3000-256M` |
+| `preset` | 编译预设，选一个即可 | `TR3000-25.12` |
+| `repo` | 自定义源码仓库（`preset=custom` 时填写） | 空 |
+| `branch` | 自定义源码分支（`preset=custom` 时填写） | 空 |
+| `config` | 自定义配置路径（`preset=custom` 时填写） | 空 |
+| `device` | 自定义设备标识，仅用于产物/Release 命名 | 空 |
 | `commit` | 指定 commit，留空用分支最新 | 空 |
 | `extras` | 是否编译第三方包（`extras/` 与 `package/`） | `true` |
 | `ssh` | 是否开 SSH 进 `menuconfig` 并回推配置 | `false` |
 | `release` | 是否发布到 Release | `true` |
 | `prerelease` | 是否预发布 | `false` |
+
+内置预设：
+
+- `TR3000-25.12`：`chasey-dev/immortalwrt-mt798x-rebase@25.12` + `config/25.12-256m.config`
+- `TR3000-24.10`：`padavanonly/immortalwrt-mt798x-6.6@openwrt-24.10-6.6` + `config/256m.config`
+- `custom`：使用下方 repo / branch / config 字段
 
 产物包含 `*sysupgrade.bin` 和 `sha256sums.txt`，同时上传 Artifacts 与 Release。
 
