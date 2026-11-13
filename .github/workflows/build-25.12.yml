@@ -1,0 +1,68 @@
+name: Build 25.12
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      repo:
+        description: '源码仓库（默认 25.12 预设，可改）'
+        required: true
+        type: string
+        default: 'https://github.com/chasey-dev/immortalwrt-mt798x-rebase'
+      branch:
+        description: '源码分支'
+        required: true
+        type: string
+        default: '25.12'
+      config:
+        description: '配置文件路径'
+        required: true
+        type: string
+        default: 'config/25.12-256m.config'
+      device:
+        description: '设备标识（产物/Release 命名）'
+        required: true
+        type: string
+        default: 'TR3000-256M'
+      commit:
+        description: '指定 commit，留空用分支最新'
+        required: false
+        type: string
+        default: ''
+      extras:
+        description: '是否编译自定义第三方包'
+        required: false
+        type: boolean
+        default: true
+      ssh:
+        description: '是否开启 SSH 进入 menuconfig 并回推配置'
+        required: false
+        type: boolean
+        default: false
+      release:
+        description: '是否发布到 Release'
+        required: false
+        type: boolean
+        default: true
+      prerelease:
+        description: '是否发布为预发布版本'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build.yml
+    secrets: inherit
+    with:
+      repo: ${{ inputs.repo }}
+      branch: ${{ inputs.branch }}
+      config: ${{ inputs.config }}
+      device: ${{ inputs.device }}
+      commit: ${{ inputs.commit }}
+      extras: ${{ inputs.extras }}
+      ssh: ${{ inputs.ssh }}
+      release: ${{ inputs.release }}
+      prerelease: ${{ inputs.prerelease }}

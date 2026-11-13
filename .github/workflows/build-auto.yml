@@ -1,0 +1,22 @@
+name: Build Auto
+
+permissions:
+  contents: write
+
+on:
+  repository_dispatch:
+    types: [ "Source Code Update" ]
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build.yml
+    secrets: inherit
+    with:
+      repo: ${{ github.event.client_payload.repo || 'https://github.com/chasey-dev/immortalwrt-mt798x-rebase' }}
+      branch: ${{ github.event.client_payload.branch || '25.12' }}
+      config: ${{ github.event.client_payload.config || 'config/25.12-256m.config' }}
+      device: ${{ github.event.client_payload.device || 'TR3000-256M' }}
+      extras: ${{ github.event.client_payload.extras != 'false' }}
+      ssh: false
+      release: ${{ github.event.client_payload.release != 'false' }}
+      prerelease: false

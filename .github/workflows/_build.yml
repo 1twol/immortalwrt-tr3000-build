@@ -1,139 +1,74 @@
-name: ImmortalWrt Builder
+name: Build (reusable)
 
 permissions:
   contents: write
 
 on:
-  repository_dispatch:
-    types: [ "Source Code Update" ]
-  workflow_dispatch:
+  workflow_call:
     inputs:
-      preset:
-        description: '编译预设'
-        required: true
-        type: choice
-        default: 'TR3000-25.12'
-        options:
-          - 'TR3000-25.12'
-          - 'TR3000-24.10'
-          - 'custom'
       repo:
-        description: '自定义源码仓库（preset=custom 时使用）'
-        required: false
+        required: true
         type: string
-        default: ''
       branch:
-        description: '自定义源码分支（preset=custom 时使用）'
-        required: false
+        required: true
         type: string
-        default: ''
       config:
-        description: '自定义配置路径（preset=custom 时使用）'
-        required: false
+        required: true
         type: string
-        default: ''
       device:
-        description: '自定义设备标识（仅用于命名）'
-        required: false
+        required: true
         type: string
-        default: ''
       commit:
-        description: '指定 commit，留空拉取分支最新'
         required: false
         type: string
         default: ''
       extras:
-        description: '是否编译自定义第三方包（diy-part1/2）'
         required: false
         type: boolean
         default: true
       ssh:
-        description: '是否开启 SSH 进入 menuconfig 并回推配置'
         required: false
         type: boolean
         default: false
       release:
-        description: '是否发布到 Release'
         required: false
         type: boolean
         default: true
       prerelease:
-        description: '是否发布为预发布版本'
         required: false
         type: boolean
         default: false
 
 env:
-  PRESET: ${{ github.event.inputs.preset || github.event.client_payload.preset || '' }}
-  RAW_REPO: ${{ github.event.inputs.repo || github.event.client_payload.repo || '' }}
-  RAW_BRANCH: ${{ github.event.inputs.branch || github.event.client_payload.branch || '' }}
-  RAW_CONFIG: ${{ github.event.inputs.config || github.event.client_payload.config || '' }}
-  RAW_DEVICE: ${{ github.event.inputs.device || github.event.client_payload.device || '' }}
-  DEVICE_INPUT: ''
-  CONFIG_FILE: ''
-  REPO_URL: ''
-  REPO_BRANCH: ''
-  REPO_COMMIT: ${{ github.event.inputs.commit || '' }}
-  ENABLE_EXTRAS: ${{ github.event.inputs.extras || github.event.client_payload.extras || 'true' }}
+  DEVICE_INPUT: ${{ inputs.device }}
+  CONFIG_FILE: ${{ inputs.config }}
+  REPO_URL: ${{ inputs.repo }}
+  REPO_BRANCH: ${{ inputs.branch }}
+  REPO_COMMIT: ${{ inputs.commit }}
+  ENABLE_EXTRAS: ${{ inputs.extras }}
   CCACHE_DIR: /workdir/.ccache
   CCACHE_MAXSIZE: 2G
   FEEDS_CONF: feeds.conf.default
   DIY_P1_SH: diy-part1.sh
   DIY_P2_SH: diy-part2.sh
-  UPLOAD_RELEASE: ${{ github.event.inputs.release || github.event.client_payload.release || 'false' }}
-  PRERELEASE: ${{ github.event.inputs.prerelease || 'false' }}
+  UPLOAD_RELEASE: ${{ inputs.release }}
+  PRERELEASE: ${{ inputs.prerelease }}
   TZ: Asia/Shanghai
 
 jobs:
   menuconfig:
     name: ⚙️ Menuconfig & Push
-    if: github.event.inputs.ssh == 'true'
+    if: inputs.ssh
     runs-on: ubuntu-22.04
     steps:
       - name: 🙌 Checkout
         uses: actions/checkout@v5
 
-      - name: 🧭 Resolve preset
+      - name: 🧭 Validate inputs
         run: |
-          REPO_URL="${RAW_REPO}"
-          REPO_BRANCH="${RAW_BRANCH}"
-          CONFIG_FILE="${RAW_CONFIG}"
-          DEVICE_INPUT="${RAW_DEVICE}"
-          case "${PRESET}" in
-            TR3000-24.10)
-              REPO_URL="https://github.com/padavanonly/immortalwrt-mt798x-6.6"
-              REPO_BRANCH="openwrt-24.10-6.6"
-              CONFIG_FILE="config/256m.config"
-              DEVICE_INPUT="TR3000-256M"
-              ;;
-            TR3000-25.12)
-              REPO_URL="https://github.com/chasey-dev/immortalwrt-mt798x-rebase"
-              REPO_BRANCH="25.12"
-              CONFIG_FILE="config/25.12-256m.config"
-              DEVICE_INPUT="TR3000-256M"
-              ;;
-            custom)
-              if [ -z "$REPO_URL" ] || [ -z "$REPO_BRANCH" ] || [ -z "$CONFIG_FILE" ]; then
-                echo "::error::preset=custom 时必须填写 repo、branch、config"
-                exit 1
-              fi
-              ;;
-            '')
-              : "${REPO_URL:=https://github.com/chasey-dev/immortalwrt-mt798x-rebase}"
-              : "${REPO_BRANCH:=25.12}"
-              : "${CONFIG_FILE:=config/25.12-256m.config}"
-              : "${DEVICE_INPUT:=TR3000-256M}"
-              ;;
-            *)
-              echo "::error::未知 preset: ${PRESET}"
-              exit 1
-              ;;
-          esac
-          echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
-          echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
-          echo "CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV
-          echo "DEVICE_INPUT=$DEVICE_INPUT" >> $GITHUB_ENV
-          echo "Preset: ${PRESET:-api} | $REPO_URL@$REPO_BRANCH | $CONFIG_FILE"
+          [ -n "$REPO_URL" ] || { echo "::error::repo 不能为空"; exit 1; }
+          [ -n "$REPO_BRANCH" ] || { echo "::error::branch 不能为空"; exit 1; }
+          [ -n "$CONFIG_FILE" ] || { echo "::error::config 不能为空"; exit 1; }
 
       - name: 🛠️ Init Environment
         run: |
@@ -209,47 +144,11 @@ jobs:
       - name: 🙌 Checkout
         uses: actions/checkout@v5
 
-      - name: 🧭 Resolve preset
+      - name: 🧭 Validate inputs
         run: |
-          REPO_URL="${RAW_REPO}"
-          REPO_BRANCH="${RAW_BRANCH}"
-          CONFIG_FILE="${RAW_CONFIG}"
-          DEVICE_INPUT="${RAW_DEVICE}"
-          case "${PRESET}" in
-            TR3000-24.10)
-              REPO_URL="https://github.com/padavanonly/immortalwrt-mt798x-6.6"
-              REPO_BRANCH="openwrt-24.10-6.6"
-              CONFIG_FILE="config/256m.config"
-              DEVICE_INPUT="TR3000-256M"
-              ;;
-            TR3000-25.12)
-              REPO_URL="https://github.com/chasey-dev/immortalwrt-mt798x-rebase"
-              REPO_BRANCH="25.12"
-              CONFIG_FILE="config/25.12-256m.config"
-              DEVICE_INPUT="TR3000-256M"
-              ;;
-            custom)
-              if [ -z "$REPO_URL" ] || [ -z "$REPO_BRANCH" ] || [ -z "$CONFIG_FILE" ]; then
-                echo "::error::preset=custom 时必须填写 repo、branch、config"
-                exit 1
-              fi
-              ;;
-            '')
-              : "${REPO_URL:=https://github.com/chasey-dev/immortalwrt-mt798x-rebase}"
-              : "${REPO_BRANCH:=25.12}"
-              : "${CONFIG_FILE:=config/25.12-256m.config}"
-              : "${DEVICE_INPUT:=TR3000-256M}"
-              ;;
-            *)
-              echo "::error::未知 preset: ${PRESET}"
-              exit 1
-              ;;
-          esac
-          echo "REPO_URL=$REPO_URL" >> $GITHUB_ENV
-          echo "REPO_BRANCH=$REPO_BRANCH" >> $GITHUB_ENV
-          echo "CONFIG_FILE=$CONFIG_FILE" >> $GITHUB_ENV
-          echo "DEVICE_INPUT=$DEVICE_INPUT" >> $GITHUB_ENV
-          echo "Preset: ${PRESET:-api} | $REPO_URL@$REPO_BRANCH | $CONFIG_FILE"
+          [ -n "$REPO_URL" ] || { echo "::error::repo 不能为空"; exit 1; }
+          [ -n "$REPO_BRANCH" ] || { echo "::error::branch 不能为空"; exit 1; }
+          [ -n "$CONFIG_FILE" ] || { echo "::error::config 不能为空"; exit 1; }
 
       - name: 🪠 Free Disk Space
         uses: jlumbroso/free-disk-space@main
