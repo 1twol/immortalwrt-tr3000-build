@@ -11,4 +11,6 @@ if [ -d package/uugamebooster-src/luci-app-uugamebooster ]; then
   sed -i -e 's#chmod +x /etc/init.d/uuplugin#chmod +x $${IPKG_INSTROOT}/etc/init.d/uuplugin#' \
          -e 's#chmod +x /usr/libexec/uuplugin/#chmod +x $${IPKG_INSTROOT}/usr/libexec/uuplugin/#g' \
          package/luci-app-uugamebooster/Makefile
+  # 25.12 的 C++ 运行库包名是 libstdcpp
+  sed -i 's/libstdcpp6/libstdcpp/g' package/luci-app-uugamebooster/Makefile
 fi

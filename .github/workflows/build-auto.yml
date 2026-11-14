@@ -2,6 +2,7 @@ name: Build Auto
 
 permissions:
   contents: write
+  actions: write
 
 on:
   repository_dispatch:
